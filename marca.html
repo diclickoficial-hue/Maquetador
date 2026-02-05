@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Constructor TN · Proveedores</title>
+  <style>
+    :root{--bg:#0b0b0c;--muted:#9aa0a6;--text:#e9eaec;--line:#2b2b30}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(1200px 700px at 10% 0%, #17171a, var(--bg));color:var(--text)}
+    .wrap{max-width:1180px;margin:0 auto;padding:18px 14px 40px}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:14px;border:1px solid var(--line);border-radius:14px;background:rgba(20,20,22,.85)}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:rgba(255,255,255,.04);padding:6px 10px;border-radius:999px;font-weight:700;font-size:12px;color:var(--muted)}
+    .pill.ok{border-color:rgba(61,220,151,.35);color:#baf5dc}
+    .pill.err{border-color:rgba(255,77,77,.35);color:#ffd0d0}
+    .grid{margin-top:14px;display:grid;grid-template-columns:460px 1fr;gap:14px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .panel{border:1px solid var(--line);border-radius:14px;background:rgba(20,20,22,.85);padding:14px}
+    label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}
+    input{width:100%;padding:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--text);border-radius:12px;outline:none;font-size:13px}
+    .row{display:flex;gap:10px;align-items:center}.row+.row{margin-top:10px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media (max-width:520px){.split{grid-template-columns:1fr}}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    button{border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:10px 12px;border-radius:12px;font-size:12px;font-weight:900;cursor:pointer}
+    button.primary{background:#fff;color:#0b0b0c}
+    button.danger{border-color:rgba(255,77,77,.35);color:#ffd0d0}
+    .cards{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .card{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:14px;padding:12px}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+    .tag{font-size:11px;font-weight:900;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted)}
+    .tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .tool{padding:7px 9px;border-radius:10px;font-size:11px;font-weight:900;background:rgba(255,255,255,.05)}
+    .tool.danger{border-color:rgba(255,77,77,.35);color:#ffd0d0}
+    .preview{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0f0f12}
+    .previewTop{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:rgba(255,255,255,.03)}
+    .frame{border-radius:12px;overflow:auto;background:#fff;max-height:75vh}
+    .frameInner{min-width:900px}
+    .small{font-size:11px;color:var(--muted)}
+	/* Solo scrollea la lista de cards */
+#form-container{
+  max-height: 62vh;          /* ajustá a gusto */
+  overflow-y: auto;
+  padding-right: 6px;        /* evita que el scrollbar tape contenido */
+}
+
+/* opcional: scrollbar más prolijo (Chrome/Edge) */
+#form-container::-webkit-scrollbar{ width: 10px; }
+#form-container::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,.12);
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0);
+  background-clip: padding-box;
+}
+#form-container::-webkit-scrollbar-track{ background: transparent; }
+
+/* Preview sin scroll “forzado” (solo scrollea si es inevitable) */
+.frame{ max-height: none; }
+/* Collapsible: por defecto colapsado */
+.provider-card .card-body{ display:none; }
+
+/* Abierto */
+.provider-card.open .card-body{ display:block; }
+
+/* Header clickeable */
+.provider-card .head{ cursor:pointer; user-select:none; }
+
+/* Flechita */
+.chev{
+  display:inline-block;
+  transform: rotate(-90deg);
+  transition: transform .15s ease;
+  margin-right: 8px;
+  opacity:.9;
+}
+.provider-card.open .chev{ transform: rotate(0deg); }
+
+/* Resumen (nombre) */
+.prov-summary{
+  font-size:12px;
+  color: var(--muted);
+  font-weight: 900;
+  margin-left: 8px;
+  max-width: 240px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div style="font-weight:900">CONSTRUCTOR TN · PROVEEDORES</div>
+        <div class="small">Salida TN con estilo base (900px, títulos, tabla 3 cols, CTA)</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill" id="pillCount">Proveedores: 0</span>
+        <span class="pill" id="pillState">Listo</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="row">
+          <div style="flex:1">
+            <label>Título (H2)</label>
+            <input id="prov-titulo" value="PROVEEDORES">
+          </div>
+        </div>
+		<div class="row">
+		  <div style="flex:1">
+			<label>Género</label>
+			<div class="btns" id="genderSeg">
+			  <button type="button" class="tool seg-btn active" data-gender="hombre">Hombre</button>
+			  <button type="button" class="tool seg-btn" data-gender="mujer">Mujer</button>
+			</div>
+		  </div>
+		</div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label>Línea marca (opcional)</label>
+            <input id="prov-marca" value="">
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label>Subtítulo (H3)</label>
+            <input id="prov-subtitulo" value="Elegí un proveedor">
+          </div>
+        </div>
+
+        <div class="split" style="margin-top:10px">
+          <div>
+            <label>Texto CTA</label>
+            <input id="prov-cta-text" value="VER TODO">
+          </div>
+          <div>
+            <label>Link CTA</label>
+            <input id="prov-cta-href" value="#">
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="btn-add">+ Agregar proveedor</button>
+          <button id="btn-add-section">+ Agregar sección</button>
+          <button class="danger" id="btn-clear">Borrar todo</button>
+        </div>
+
+        <div class="cards" id="form-container"></div>
+
+        <div class="btns">
+          <button class="primary" id="btn-copy">📋 Copiar HTML</button>
+          <button class="danger" id="btn-clear-2">Borrar todo</button>
+          <button id="btn-copy-2">📋 Copiar HTML</button>
+        </div>
+
+        <div class="small" id="statusMsg">—</div>
+      </div>
+
+      <div class="preview">
+        <div class="previewTop">
+          <div>
+            <div style="font-weight:900">Preview (HTML TN)</div>
+            <div class="small">Copiá y pegá en Tiendanube &gt; Pages</div>
+          </div>
+          <div class="btns">
+            <button class="primary" id="btn-copy-3">📋 Copiar HTML</button>
+          </div>
+        </div>
+        <div style="padding:14px">
+          <div class="frame">
+            <div class="frameInner" id="preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.proveedores.core.js"></script>
+  <script src="./app.proveedores.ui.js"></script>
+</body>
+</html>
