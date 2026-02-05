@@ -328,6 +328,78 @@
     line-height: 1;
     border-radius: 12px;
   }
+  /* ===== Subtítulo (sección) ===== */
+.subtitle-card{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  padding:10px 12px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.subtitle-card .pill{
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  border:1px solid var(--line);
+  background:#fff;
+  white-space:nowrap;
+  font-weight:900;
+}
+.subtitle-card input{
+  flex:1;
+  padding:10px 10px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  outline:none;
+  font-size:13px;
+}
+/* ===== Subtítulo entre bloques de talles ===== */
+.subtitle-card{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:14px;
+
+  /* ✅ más aire arriba que abajo */
+  padding:16px 12px 10px;
+
+  /* ✅ separa del bloque anterior y lo “pega” al bloque siguiente */
+  margin:18px 0 10px;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* el input del subtítulo */
+.subtitle-card .subtitle-text{
+  flex:1;
+  min-width:0;
+}
+
+/* pill más “de sección” */
+.subtitle-card .pill{
+  background:var(--brandSoft);
+  border-color:#ddd6fe;
+}
+
+/* si el subtítulo está al inicio, que quede bien “encabezado” */
+#form-container > .subtitle-card:first-child{
+  margin-top:6px;
+  margin-bottom:14px;
+}
+
+/* si querés un separador arriba (súper sutil) */
+.subtitle-card::before{
+  content:"";
+  display:block;
+  height:0;
+  border-top:1px dashed var(--line);
+  margin:-6px 0 12px;
+}
+
 </style>
 
 </head>
@@ -390,6 +462,9 @@
       <button class="btn btn-primary" type="button" id="btn-add" style="width:100%; justify-content:center;">
         ＋ Agregar talle
       </button>
+	  <button class="btn" type="button" id="btn-add-subtitle" style="width:100%; justify-content:center; margin-top:8px;">
+	    ＋ Agregar subtítulo (cada 2 talles)
+	  </button>
 
       <div class="status" id="status">Listo.</div>
     </div>

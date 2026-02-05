@@ -36,21 +36,37 @@ function readConfig() {
   };
 }
 
-function readTalles() {
-  return _qsa(".talle-card").map(card => {
-    const num  = _tn(_qs(".talle-num", card)?.value ?? "");
-    const eu   = _tn(_qs(".talle-eu", card)?.value ?? "");
-    const link = _attr(_qs(".talle-link", card)?.value ?? "#");
+function readItems(){
+  const container = _qs("#form-container");
+  if (!container) return [];
 
-    const measures = _qsa(".measure-row", card).map(r => ({
-      label: _tn(_qs(".m-label", r)?.value ?? ""),
-      value: _tn(_qs(".m-value", r)?.value ?? ""),
-      unit:  _tn(_qs(".m-unit",  r)?.value ?? "")
-    })).filter(m => (m.label.trim() || m.value.trim()));
+  return Array.from(container.children).map(el => {
+    // Subtítulo
+    if (el.classList.contains("subtitle-card")) {
+      const text = _tn(_qs(".subtitle-text", el)?.value ?? "");
+      return { type: "subtitle", text };
+    }
 
-    return { num, eu, link, measures };
-  });
+    // Talle
+    if (el.classList.contains("talle-card")) {
+      const num  = _tn(_qs(".talle-num", el)?.value ?? "");
+      const eu   = _tn(_qs(".talle-eu", el)?.value ?? "");
+      const link = _attr(_qs(".talle-link", el)?.value ?? "#");
+
+      const measures = _qsa(".measure-row", el).map(r => ({
+        label: _tn(_qs(".m-label", r)?.value ?? ""),
+        value: _tn(_qs(".m-value", r)?.value ?? ""),
+        unit:  _tn(_qs(".m-unit",  r)?.value ?? "")
+      })).filter(m => (m.label.trim() || m.value.trim()));
+
+      return { type: "talle", num, eu, link, measures };
+    }
+
+    return null;
+  }).filter(Boolean);
 }
+
+
 
 /* =========================
    PREVIEW: mismos grids, distintos colores
@@ -153,9 +169,10 @@ function buildGridTable2Cols(cardsHtml, theme) {
 </table>`.trim();
 }
 
-function buildTnBlockUnified(cfg, talles, theme, genderLabel) {
-  const cards = talles.map(t => buildCardHtml(t, theme));
-  const grid = buildGridTable2Cols(cards, theme);
+function buildTnBlockUnified(cfg, items, theme, genderLabel) {
+
+  const grid = buildGridTable2ColsFromItems(items, theme);
+
 
   return `
 <div style="
@@ -259,7 +276,7 @@ function updatePreview() {
   window.refreshHeaderSummaryForAll?.();
 
   const cfg = readConfig();
-  const talles = readTalles();
+  const items = readItems();
 
   const preview = _qs("#preview");
   if (!preview) return;
@@ -268,14 +285,17 @@ function updatePreview() {
 
   preview.innerHTML = buildTnBlockUnified(
     cfg,
-    talles,
+    items, // ✅ acá va items
     isMan ? THEME_MAN : THEME_WOMAN,
     isMan ? "CRUZO - HOMBRE" : "CRUZO - MUJER"
   );
 
-  if (talles.length === 0) window.setStatus?.("No hay talles. Agregá al menos 1.", true);
-  else window.setStatus?.(`OK: ${talles.length} talle(s). Preview listo (${CURRENT_GENDER.toUpperCase()}).`);
+  const talleCount = items.filter(x => x.type === "talle").length;
+
+  if (talleCount === 0) window.setStatus?.("No hay talles. Agregá al menos 1.", true);
+  else window.setStatus?.(`OK: ${talleCount} talle(s). Preview listo (${CURRENT_GENDER.toUpperCase()}).`);
 }
+
 window.updatePreview = updatePreview;
 
 /* ===== Copy TN HTML ===== */
@@ -299,53 +319,104 @@ async function copyPreviewHtml() {
 
 /* ===== Init ===== */
 document.addEventListener("DOMContentLoaded", () => {
-  // Segment género
   _qsa("#genderSeg .seg-btn").forEach(btn => {
     btn.addEventListener("click", () => setGender(btn.dataset.gender));
   });
 
-  // Agregar talle
   _qs("#btn-add")?.addEventListener("click", () => window.addTalle?.());
+  _qs("#btn-add-subtitle")?.addEventListener("click", () => window.addSubtitle?.());
 
-  // Borrar talles (izquierda)
   _qs("#btn-clear")?.addEventListener("click", () => {
     window.clearTalles?.();
     window.setStatus?.("Talles borrados.");
   });
 
-  // Copiar arriba + abajo (preview)
   _qs("#btn-copy")?.addEventListener("click", copyPreviewHtml);
   _qs("#btn-copy-2")?.addEventListener("click", copyPreviewHtml);
 
-  // X abajo (preview): borra talles
   _qs("#btn-clear-2")?.addEventListener("click", () => {
     window.clearTalles?.();
     window.setStatus?.("Talles borrados.");
   });
 
-  // Inputs config
   ["#guia-titulo", "#guia-subtitulo", "#ver-todo-text", "#ver-todo-href"].forEach(sel => {
     _qs(sel)?.addEventListener("input", updatePreview);
   });
 
-  // Demo inicial
-  if (_qsa(".talle-card").length === 0) {
-    window.addTalle?.({
-      num: "38",
-      eu: "S",
-      link: "#",
-      measures: [
-        { label: "Cintura", value: "74–83", unit: "cm" },
-        { label: "Cadera", value: "90–94", unit: "cm" }
-      ]
-    });
-  }
 
   window.setCount?.();
 
-  // respeta activo HTML
+  const btnSub = _qs("#btn-add-subtitle");
+  if (btnSub && window.canInsertSubtitleNow){
+    const refreshBtnSub = () => {
+      const ok = window.canInsertSubtitleNow();
+      btnSub.disabled = !ok;
+      btnSub.style.opacity = ok ? "1" : "0.45";
+      btnSub.style.cursor = ok ? "pointer" : "not-allowed";
+    };
+    refreshBtnSub();
+
+    const _oldUpdate = window.updatePreview;
+    window.updatePreview = function(){
+      _oldUpdate?.();
+      refreshBtnSub();
+    };
+  }
+
   const activeBtn = _qs("#genderSeg .seg-btn.active");
   if (activeBtn?.dataset?.gender) CURRENT_GENDER = activeBtn.dataset.gender;
 
   updatePreview();
 });
+
+
+
+
+function buildSubtitleRow(text, theme){
+  return `
+<tr>
+  <td colspan="2" style="padding:18px 10px 6px; text-align:center;">
+    <div style="
+      font-weight:900;
+      letter-spacing:.3px;
+      color:${theme.titleColor};
+      font-size:14px;
+    ">${text || "&nbsp;"}</div>
+  </td>
+</tr>`.trim();
+}
+
+function buildGridTable2ColsFromItems(items, theme){
+  let rows = "";
+  let pending = []; // junta 2 cards
+
+  function flush(){
+    if (pending.length === 0) return;
+    const a = pending[0] || "";
+    const b = pending[1] || "";
+    rows += `
+<tr>
+  <td style="width:50%; padding:10px; vertical-align:top;">${a || "&nbsp;"}</td>
+  <td style="width:50%; padding:10px; vertical-align:top;">${b || "&nbsp;"}</td>
+</tr>`;
+    pending = [];
+  }
+
+  for (const it of items){
+    if (it.type === "subtitle"){
+      flush();
+      rows += buildSubtitleRow(it.text, theme);
+      continue;
+    }
+    if (it.type === "talle"){
+      pending.push(buildCardHtml(it, theme));
+      if (pending.length === 2) flush();
+    }
+  }
+  flush();
+
+  return `
+<table style="width:100%; border-collapse:collapse; table-layout:fixed; margin:0 auto;">
+  <tbody>${rows}</tbody>
+</table>`.trim();
+}
