@@ -185,6 +185,42 @@
     wireCard(card);
     callIfFn(window.updatePreview);
   }
+function addCategory(data){
+	  if (!data) data = {};
+	  var container = qs("#form-container");
+	  if (!container) return;
+
+	  var card = document.createElement("div");
+	  card.className = "card category-card";
+
+	  card.innerHTML =
+		'<div class="head">' +
+		  '<div class="tag">CATEGORÍA</div>' +
+		  '<div class="tools"></div>' +
+		"</div>" +
+
+		'<div class="split">' +
+		  "<div>" +
+			"<label>Título</label>" +
+			'<input class="cat-title" placeholder="Ej: WIDE LEG · PALAZOS" value="' + (window.tnAttr ? window.tnAttr(data.title || "") : (data.title || "")) + '">' +
+		  "</div>" +
+		  "<div>" +
+			"<label>Link destino</label>" +
+			'<input class="cat-link" placeholder="https://..." value="' + (window.tnAttr ? window.tnAttr(data.link || "#") : (data.link || "#")) + '">' +
+		  "</div>" +
+		"</div>" +
+
+		'<div class="row">' +
+		  '<div style="flex:1">' +
+			"<label>URL Imagen chica (icono)</label>" +
+			'<input class="cat-img" placeholder="https://..." value="' + (window.tnAttr ? window.tnAttr(data.img || "") : (data.img || "")) + '">' +
+		  "</div>" +
+		"</div>";
+
+	  container.appendChild(card);
+	  wireCard(card);
+	  window.updatePreview && window.updatePreview();
+  }
 
   function clearAll(){
     var c = qs("#form-container");
@@ -215,39 +251,45 @@
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
-    window.addProvider = addProvider;
-    window.addSection  = addSection;
-    window.clearProviders = clearAll;
+document.addEventListener("DOMContentLoaded", function () {
+  // Exponer por si querés hookear desde afuera
+  window.addProvider = addProvider;
+  window.addSection  = addSection;
+  window.addCategory = addCategory;   // ✅ NUEVO
+  window.clearProviders = clearAll;
 
-    wireGenderSeg();
+  // Botones
+  var bCat = qs("#btn-add-category");
+  if (bCat) bCat.addEventListener("click", function(){ addCategory(); }); // ✅ NUEVO
 
-    var bAdd = qs("#btn-add");
-    if (bAdd) bAdd.addEventListener("click", function(){ addProvider({}); });
+  var bProv = qs("#btn-add");
+  if (bProv) bProv.addEventListener("click", function(){ addProvider(); });
 
-    var bAddSec = qs("#btn-add-section");
-    if (bAddSec) bAddSec.addEventListener("click", function(){ addSection(""); });
+  var bSec = qs("#btn-add-section");
+  if (bSec) bSec.addEventListener("click", function(){ addSection(""); });
 
-    var bClear = qs("#btn-clear");
-    if (bClear) bClear.addEventListener("click", clearAll);
+  var bc = qs("#btn-clear");
+  if (bc) bc.addEventListener("click", clearAll);
 
-    var bClear2 = qs("#btn-clear-2");
-    if (bClear2) bClear2.addEventListener("click", clearAll);
+  var bc2 = qs("#btn-clear-2");
+  if (bc2) bc2.addEventListener("click", clearAll);
 
-    var bCopy = qs("#btn-copy");
-    if (bCopy) bCopy.addEventListener("click", function(){ callIfFn(window.copyPreviewHtml); });
+  var cp = qs("#btn-copy");
+  if (cp) cp.addEventListener("click", function(){ window.copyPreviewHtml && window.copyPreviewHtml(); });
 
-    var bCopy2 = qs("#btn-copy-2");
-    if (bCopy2) bCopy2.addEventListener("click", function(){ callIfFn(window.copyPreviewHtml); });
+  var cp2 = qs("#btn-copy-2");
+  if (cp2) cp2.addEventListener("click", function(){ window.copyPreviewHtml && window.copyPreviewHtml(); });
 
-    var bCopy3 = qs("#btn-copy-3");
-    if (bCopy3) bCopy3.addEventListener("click", function(){ callIfFn(window.copyPreviewHtml); });
+  var cp3 = qs("#btn-copy-3");
+  if (cp3) cp3.addEventListener("click", function(){ window.copyPreviewHtml && window.copyPreviewHtml(); });
 
-    ["#prov-titulo","#prov-marca","#prov-subtitulo","#prov-cta-text","#prov-cta-href"].forEach(function(sel){
-      var el = qs(sel);
-      if (el) el.addEventListener("input", function(){ callIfFn(window.updatePreview); });
-    });
-
-    callIfFn(window.updatePreview);
+  ["#prov-titulo","#prov-marca","#prov-subtitulo","#prov-cta-text","#prov-cta-href"].forEach(function(sel){
+    var el = qs(sel);
+    if (el) el.addEventListener("input", function(){ window.updatePreview && window.updatePreview(); });
   });
+
+  // inicia vacío
+  if (window.updatePreview) window.updatePreview();
+  });
+
 })();

@@ -70,34 +70,52 @@ window.setGender = setGender;
       ctaHref: tnAttr((qs("#prov-cta-href") && qs("#prov-cta-href").value) ? qs("#prov-cta-href").value : "#")
     };
   }
-
+  
   function readItems(){
-    var container = qs("#form-container");
-    if (!container) return [];
+	  var container = qs("#form-container");
+	  if (!container) return [];
 
-    return Array.prototype.slice.call(container.children).map(function(el){
-      if (el.classList.contains("section-card")){
-        var inp = qs(".section-text", el);
-        return { type: "section", text: tnEntities(inp ? inp.value : "") };
-      }
-      if (el.classList.contains("provider-card")){
-        var name = qs(".prov-name", el);
-        var note = qs(".prov-note", el);
-        var img  = qs(".prov-img", el);
-        // link queda leído pero NO se usa (link auto por nombre)
-        var link = qs(".prov-link", el);
+	  return Array.prototype.slice.call(container.children).map(function(el){
 
-        return {
-          type: "provider",
-          name: tnEntities(name ? name.value : ""),
-          note: tnEntities(note ? note.value : ""),
-          img:  tnAttr(img ? img.value : ""),
-          link: tnAttr(link ? link.value : "#")
-        };
-      }
-      return null;
-    }).filter(Boolean);
+		// SUBTITULOS / SECCIONES (los que ya usás)
+		if (el.classList.contains("section-card")){
+		  var inp = qs(".section-text", el);
+		  return { type: "section", text: tnEntities(inp ? inp.value : "") };
+		}
+
+		// ✅ NUEVO: CATEGORÍA (imagen + link + texto)
+		if (el.classList.contains("category-card")){
+		  var t = qs(".cat-title", el);
+		  var i = qs(".cat-img", el);
+		  var l = qs(".cat-link", el);
+		  return {
+			type: "category",
+			title: tnEntities(t ? t.value : ""),
+			img:   tnAttr(i ? i.value : ""),
+			link:  tnAttr(l ? l.value : "#")
+		  };
+		}
+
+		// PROVEEDOR (igual que antes)
+		if (el.classList.contains("provider-card")){
+		  var name = qs(".prov-name", el);
+		  var note = qs(".prov-note", el);
+		  var img  = qs(".prov-img", el);
+		  var link = qs(".prov-link", el); // lo dejás si querés, no se usa
+
+		  return {
+			type: "provider",
+			name: tnEntities(name ? name.value : ""),
+			note: tnEntities(note ? note.value : ""),
+			img:  tnAttr(img ? img.value : ""),
+			link: tnAttr(link ? link.value : "#")
+		  };
+		}
+
+		return null;
+	  }).filter(Boolean);
   }
+
 
   /* =========================================================
      URL AUTOMÁTICA: https://margusoficial.com/guia-<proveedor>/
@@ -299,35 +317,123 @@ window.setGender = setGender;
     return out.join("\n");
   }
 
-  function buildTnHtml(cfg, items){
-    var theme = getTheme();
-    var sections = buildSections(items, theme);
+function buildTnHtml(cfg, items){
+	  var theme = getTheme();
 
-    var cta =
-      '<div style="text-align:center; margin-bottom:25px;">' +
-        '<a style="background:' + theme.ctaBg + "; color:" + theme.ctaText + '; text-decoration:none; font-size:14px; padding:12px 40px; font-weight:900; display:inline-block;" href="' + cfg.ctaHref + '">' +
-          cfg.ctaText +
-        "</a>" +
-      "</div>";
+	  // separar items
+	  var categories = [];
+	  var providersAndSections = [];
 
-    return (
-      '<div style="max-width:900px; margin:0 auto; padding:' + theme.wrapPad + "; font-family: Arial, Helvetica, sans-serif; background:" + theme.pageBg + ';">' +
+	  for (var i=0; i<items.length; i++){
+		if (items[i].type === "category") categories.push(items[i]);
+		else providersAndSections.push(items[i]);
+	  }
 
-        '<h2 style="text-align:center; font-size:22px; color:' + theme.titleColor + '; margin:0 0 10px 0; font-weight:900;">' + cfg.titulo + "</h2>" +
+	  var categoriesHtml = buildCategoriesTable(categories, theme);
+	  var providersHtml  = buildSections(providersAndSections, theme);
 
-        '<p style="text-align:center; font-size:18px; color:' + theme.titleColor + '; margin:0 0 25px 0; font-weight:900;">' + cfg.marca + "</p>" +
+	  var cta =
+		'<div style="text-align:center; margin-bottom:25px;">' +
+		  '<a style="background:' + theme.ctaBg + "; color:" + theme.ctaText + '; text-decoration:none; font-size:14px; padding:12px 40px; font-weight:900; display:inline-block;" href="' + cfg.ctaHref + '">' +
+			cfg.ctaText +
+		  "</a>" +
+		"</div>";
 
-        '<h3 style="text-align:center; font-size:16px; color:' + theme.subColor + '; margin:0 0 20px 0; font-weight:900;">' + cfg.subtitulo + "</h3>" +
+	  return (
+		'<div style="max-width:900px; margin:0 auto; padding:' + theme.wrapPad + "; font-family: Arial, Helvetica, sans-serif; background:" + theme.pageBg + ';">' +
 
-        cta +
+		  '<h2 style="text-align:center; font-size:22px; color:' + theme.titleColor + '; margin:0 0 10px 0; font-weight:900;">' + cfg.titulo + "</h2>" +
 
-        (sections || '<div style="padding:14px; text-align:center; color:' + theme.subColor + '; font-size:13px; font-weight:900;">Agregá proveedores para generar la tabla.</div>') +
+		  '<p style="text-align:center; font-size:18px; color:' + theme.titleColor + '; margin:0 0 25px 0; font-weight:900;">' + cfg.marca + "</p>" +
 
-        cta +
+		  '<h3 style="text-align:center; font-size:16px; color:' + theme.subColor + '; margin:0 0 20px 0; font-weight:900;">' + cfg.subtitulo + "</h3>" +
 
-        '<div style="background:' + theme.footerBg + '; padding:20px; margin-bottom:20px;">&nbsp;</div>' +
-      "</div>"
-    );
+		  // ✅ CATEGORIAS ARRIBA
+		  (categoriesHtml
+			? (buildSubtitle("CATEGORÍAS", theme) + categoriesHtml)
+			: '<div style="padding:10px 0; text-align:center; color:' + theme.subColor + '; font-size:12px; font-weight:900;">(Sin categorías)</div>'
+		  ) +
+
+		  // ✅ PROVEEDORES ABAJO
+		  (providersHtml
+			? (buildSubtitle("PROVEEDORES", theme) + providersHtml)
+			: '<div style="padding:14px; text-align:center; color:' + theme.subColor + '; font-size:13px; font-weight:900;">Agregá proveedores para generar la tabla.</div>'
+		  ) +
+
+		  cta +
+
+		  '<div style="background:' + theme.footerBg + '; padding:20px; margin-bottom:20px;">&nbsp;</div>' +
+		"</div>"
+	  );
+  }
+
+  function buildSubtitle(text, theme){
+  return (
+    '<div style="text-align:center; margin: 18px 0 10px 0;">' +
+      '<div style="font-size:13px; color:' + theme.sectionColor + '; font-weight:' + theme.sectionWeight + '; letter-spacing:.3px;">' +
+        (text || "&nbsp;") +
+      "</div>" +
+    "</div>"
+  );
+}
+
+function buildCategoryCell(cat, theme){
+	  // imagen chica (si no hay, deja espacio)
+	  var img = cat.img
+		  ? '<img style="width:40px; height:40px; object-fit:cover; border-radius:10px; display:inline-block; vertical-align:middle; margin-right:8px;" src="' + cat.img + '" alt="' + tnAttr(cat.title || "Categoria") + '" />'
+		  : '<span style="display:inline-block; width:40px; height:40px; margin-right:8px;">&nbsp;</span>';
+
+
+	  // estilo tipo tu tabla (pero adaptado a theme)
+	  // mujer -> borde rosa, hombre -> borde gris
+	  var borderCol = (CURRENT_GENDER === "mujer") ? "#f8d7da" : theme.cardBorder;
+
+	  return (
+		'<td style="' +
+		  "width:50%;" +
+		  "text-align:center;" +
+		  "padding:12px 6px;" +
+		  "vertical-align:middle;" +
+		  "background:#fff;" +
+		  "border:2px solid " + borderCol + ";" +
+		'">' +
+		  '<a style="' +
+			"color:" + theme.titleColor + ";" +
+			"text-decoration:none;" +
+			"font-size:10px;" +
+			"font-weight:800;" +
+			"letter-spacing:.2px;" +
+			"display:inline-flex;" +
+			"align-items:center;" +
+			"justify-content:center;" +
+			"gap:6px;" +
+		  '" href="' + (cat.link || "#") + '">' +
+			img +
+			(cat.title || "&nbsp;") +
+		  "</a>" +
+		"</td>"
+	  );
+  }
+
+function buildCategoriesTable(categories, theme){
+		  if (!categories || categories.length === 0) return "";
+
+		  var rows = "";
+		  for (var i=0; i<categories.length; i+=2){
+			var a = categories[i] || null;
+			var b = categories[i+1] || null;
+
+			rows += "<tr>";
+			rows += a ? buildCategoryCell(a, theme) : '<td style="width:50%;padding:12px 6px;background:#fff;">&nbsp;</td>';
+			rows += b ? buildCategoryCell(b, theme) : '<td style="width:50%;padding:12px 6px;background:#fff;">&nbsp;</td>';
+			rows += "</tr>";
+		  }
+
+		  return (
+			'<table style="width:100%; border-collapse:separate; border-spacing:6px; table-layout:fixed; margin-bottom:18px;">' +
+			  "<tbody>" + rows + "</tbody>" +
+			"</table>"
+		  );
   }
 
   /* ===== Preview / Copy ===== */
