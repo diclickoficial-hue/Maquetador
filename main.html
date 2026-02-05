@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Constructor Guía de Talles (TN) - Compacto</title>
+
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb; --soft:#f3f4f6;
+    --brand:#7c3aed; --brand2:#6d28d9; --brandSoft:#ede9fe;
+    --danger:#ef4444;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+
+  /* Layout general */
+  .app{
+    height:100vh;
+    display:grid;
+    grid-template-columns: 440px 1fr;
+    gap:14px;
+    padding:14px;
+  }
+  @media (max-width: 1000px){
+    .app{ grid-template-columns:1fr; height:auto; }
+    .panel{ height: 70vh; }
+  }
+
+  /* Panel: el ÚNICO que scrollea */
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 8px 24px rgba(17,24,39,0.06);
+    overflow:auto;
+    min-height:0;
+  }
+
+  .panel-header{
+    position:sticky; top:0; z-index:5;
+    padding:12px 14px 10px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#fff,#fbfbfd);
+  }
+  .title{
+    display:flex; align-items:center; gap:10px;
+    margin:0; font-size:15px; font-weight:900;
+  }
+  .badge{
+    font-size:11px; padding:3px 8px; border-radius:999px;
+    background:var(--brandSoft); color:var(--brand2); border:1px solid #ddd6fe;
+    font-weight:800;
+  }
+  .sub{
+    margin:6px 0 0; font-size:12px; color:var(--muted); line-height:1.35;
+  }
+
+  .panel-body{ padding:12px 14px 14px; }
+
+  /* Config compacta */
+  .cfg{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .lbl{ font-size:12px; color:var(--muted); font-weight:800; }
+  input{
+    padding:10px 10px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    outline:none;
+    background:#fff; color:var(--text);
+    font-size:13px;
+  }
+  input:focus{
+    border-color:#c4b5fd;
+    box-shadow:0 0 0 4px rgba(124,58,237,0.12);
+  }
+
+  /* Segment (H/M) */
+  .seg{
+    display:flex; gap:6px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:4px;
+    background:#fff;
+    width:fit-content;
+  }
+  .seg-btn{
+    border:1px solid transparent;
+    background:transparent;
+    border-radius:10px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-weight:900;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .seg-btn.active{
+    background:var(--brandSoft);
+    border-color:#ddd6fe;
+    color:var(--brand2);
+  }
+
+  /* Header de Talles */
+  .talles-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:#fafafa;
+    margin-bottom:10px;
+    gap:10px;
+  }
+  .th-left{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .th-h{ font-size:12px; font-weight:900; }
+  .th-p{ font-size:12px; color:var(--muted); }
+
+  .th-right{ display:flex; align-items:center; gap:8px; }
+  .count{
+    font-size:12px; font-weight:900;
+    padding:4px 10px;
+    border-radius:999px;
+    background:var(--brandSoft);
+    border:1px solid #ddd6fe;
+    color:var(--brand2);
+  }
+
+  .btn{
+    padding:9px 10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    user-select:none;
+  }
+  .btn:hover{ background:var(--soft); }
+  .btn-primary{
+    border-color:rgba(124,58,237,0.35);
+    background:linear-gradient(180deg,#8b5cf6,var(--brand2));
+    color:#fff;
+  }
+  .btn-primary:hover{ filter:brightness(1.03); background:linear-gradient(180deg,#8b5cf6,#5b21b6); }
+  .btn-danger{
+    border-color:rgba(239,68,68,0.35);
+    background:#fff;
+    color:var(--danger);
+  }
+  .btn-danger:hover{ background:#fff5f5; }
+
+  .status{
+    font-size:12px;
+    padding:9px 10px;
+    border-radius:12px;
+    border:1px dashed var(--line);
+    color:var(--muted);
+    background:#fafafa;
+    margin-top:10px;
+  }
+
+  /* Lista talles */
+  #form-container{ margin-top:10px; }
+
+  /* ===== Talle card ===== */
+  .talle-card{
+    border:1px solid var(--line);
+    border-radius:14px;
+    background:#fff;
+    overflow:hidden;
+    margin-bottom:10px;
+  }
+  .talle-header{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    cursor:pointer;
+    user-select:none;
+    background:linear-gradient(180deg,#fff,#fbfbfd);
+  }
+  .talle-header:hover{ background:#f8fafc; }
+
+  .chev{
+    width:32px; height:32px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    display:grid; place-items:center;
+    background:#fff;
+    color:var(--brand2);
+    font-weight:900;
+    flex:0 0 auto;
+  }
+
+  .tline{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:0;
+    flex-wrap:wrap;
+  }
+  .pill{
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    white-space:nowrap;
+  }
+  .pill strong{ font-weight:900; }
+
+  .summary{
+    font-size:12px;
+    color:var(--muted);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:260px;
+  }
+
+  .t-actions{
+    display:flex; gap:6px;
+    flex:0 0 auto;
+  }
+  .mini{
+    padding:7px 9px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:900;
+  }
+  .mini:hover{ background:var(--soft); }
+  .mini.del{ color:var(--danger); }
+  .mini.del:hover{ background:#fff5f5; }
+
+  .talle-body{
+    display:none;
+    padding:12px;
+    background:#fafafa;
+    border-top:1px solid var(--line);
+  }
+  .talle-card.open .talle-body{ display:block; }
+  .talle-card.open .chev{ background:var(--brandSoft); border-color:#ddd6fe; }
+
+  .grid3{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1.4fr;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  @media (max-width: 520px){
+    .grid3{ grid-template-columns:1fr; }
+    .cfg{ grid-template-columns:1fr; }
+  }
+
+  /* =========================
+     Medidas (LIMPIO, sin duplicados)
+     - 3 inputs + botón "Eliminar" (mini del btn-remove)
+     - footer con + abajo (único +)
+  ========================= */
+  .measures{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .measure-row{
+    display:grid;
+    grid-template-columns: 1.1fr 1fr 0.6fr auto;
+    gap:6px;
+    align-items:center;
+  }
+
+  .measure-row input{
+    padding:9px 10px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    font-size:12px;
+    background:#fff;
+  }
+
+  /* botón Eliminar igual a UI */
+  .measure-row .mini{
+    padding:9px 10px;          /* un poco más alto para matchear inputs */
+    border-radius:12px;
+    font-size:12px;
+  }
+
+  .measures-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-top:8px;
+  }
+
+  /* Preview */
+  .preview-tools{
+    display:flex; gap:8px; flex-wrap:wrap;
+    padding:10px 14px;
+    border-bottom:1px solid var(--line);
+    background:#fafafa;
+    position:sticky; top:0; z-index:5;
+  }
+  .preview-body{ padding:12px 14px 18px; }
+
+  /* ✅ Barra inferior preview */
+  .preview-tools-bottom{
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    border-top: 1px solid var(--line);
+    border-bottom: 0;
+    justify-content: flex-end;
+  }
+  #btn-clear-2{
+    padding: 9px 12px;
+    line-height: 1;
+    border-radius: 12px;
+  }
+</style>
+
+</head>
+
+<body>
+<div class="app">
+
+  <!-- LEFT -->
+  <div class="panel" id="panel-left">
+    <div class="panel-header">
+      <h1 class="title">Constructor Guía (TN) <span class="badge">Compact</span></h1>
+      <p class="sub">Config arriba (compacto). Abajo talles grandes. Scroll SOLO del panel.</p>
+    </div>
+
+    <div class="panel-body">
+
+      <div class="cfg">
+        <div class="field" style="grid-column: 1 / -1;">
+          <div class="lbl">Género</div>
+          <div class="seg" id="genderSeg">
+            <button class="seg-btn active" type="button" data-gender="hombre">Hombre</button>
+            <button class="seg-btn" type="button" data-gender="mujer">Mujer</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="lbl">Título</div>
+          <input id="guia-titulo" type="text" value="GUÍA DE TALLES">
+        </div>
+
+        <div class="field">
+          <div class="lbl">Subtítulo</div>
+          <input id="guia-subtitulo" type="text" value="ELEGÍ TU TALLE SEGÚN TUS MEDIDAS">
+        </div>
+
+        <div class="field">
+          <div class="lbl">Texto botón “Ver todo”</div>
+          <input id="ver-todo-text" type="text" value="VER TODO CRUZO">
+        </div>
+
+        <div class="field">
+          <div class="lbl">Link botón “Ver todo”</div>
+          <input id="ver-todo-href" type="text" value="">
+        </div>
+      </div>
+
+      <div class="talles-head">
+        <div class="th-left">
+          <div class="th-h">Talles <span class="count" id="count-badge">0</span></div>
+          <div class="th-p">Click para abrir/cerrar. Editar/Eliminar a la derecha.</div>
+        </div>
+
+        <div class="th-right">
+          <button class="btn btn-danger" type="button" id="btn-clear">🗑 Borrar</button>
+        </div>
+      </div>
+
+      <div id="form-container"></div>
+
+      <button class="btn btn-primary" type="button" id="btn-add" style="width:100%; justify-content:center;">
+        ＋ Agregar talle
+      </button>
+
+      <div class="status" id="status">Listo.</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel" id="panel-right">
+    <div class="panel-header">
+      <h1 class="title">Preview (TN-ready) <span class="badge">HTML</span></h1>
+      <p class="sub">Se copia y pega en Tiendanube &gt; Pages.</p>
+    </div>
+
+    <!-- barra superior -->
+    <div class="preview-tools">
+      <button class="btn" type="button" id="btn-copy">⧉ Copiar HTML TN</button>
+    </div>
+
+    <div class="preview-body" id="preview"></div>
+
+    <!-- ✅ barra inferior (botón de abajo + X) -->
+    <div class="preview-tools preview-tools-bottom">
+      <button class="btn" type="button" id="btn-copy-2">⧉ Copiar HTML TN</button>
+      <button class="btn btn-danger" type="button" id="btn-clear-2">✖</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- split scripts -->
+<script src="./app.talles.js" defer></script>
+<script src="./app.core.js" defer></script>
+
+</body>
+
+</html>
