@@ -209,65 +209,124 @@ window.setGender = setGender;
       "</p>"
     );
   }
+	/* =========================
+	   JSON EXPORT / IMPORT (CORE)
+	========================= */
+
+  function exportProjectJson(){
+	  var cfg = readConfig();
+	  var items = readItems();
+	  var html = buildTnHtml(cfg, items);
+
+	  return {
+		v: 1,
+		app: "tn_proveedores_builder",
+		ts: (new Date()).toISOString ? (new Date()).toISOString() : String(+new Date()),
+		gender: CURRENT_GENDER,
+		config: cfg,
+		items: items,
+		html: html
+	  };
+	}
+
+  function importProjectJson(data){
+	  if (!data || typeof data !== "object") throw new Error("JSON inválido");
+
+	  // género
+	  if (data.gender === "mujer" || data.gender === "hombre"){
+		CURRENT_GENDER = data.gender;
+	  }
+
+	  // config -> inputs
+	  var cfg = data.config || {};
+	  var el;
+
+	  el = qs("#prov-titulo");    if (el) el.value = cfg.titulo || "";
+	  el = qs("#prov-marca");     if (el) el.value = cfg.marca || "";
+	  el = qs("#prov-subtitulo"); if (el) el.value = cfg.subtitulo || "";
+	  el = qs("#prov-cta-text");  if (el) el.value = cfg.ctaText || "";
+	  el = qs("#prov-cta-href");  if (el) el.value = cfg.ctaHref || "#";
+
+	  // devolver items para que UI reconstruya cards
+	  var items = data.items;
+	  if (!items || typeof items.length !== "number") items = [];
+
+	  return {
+		gender: CURRENT_GENDER,
+		items: items
+	  };
+	}
+
+	// ✅ Exponer (lo que te falta)
+	window.exportProjectJson = exportProjectJson;
+	window.importProjectJson = importProjectJson;
 
   function buildProviderCard(p, theme){
-    var img = p.img
-      ? '<img style="max-width:120px; max-height:80px; object-fit:contain; display:block; margin:0 auto;" src="' + p.img + '" alt="' + tnAttr(p.name || "Proveedor") + '" />'
-      : '<div style="height:80px; display:flex; align-items:center; justify-content:center; color:' + theme.noteColor + '; font-weight:bold;">&nbsp;</div>';
+	  var img = p.img
+		? '<img style="max-width:120px; max-height:80px; object-fit:contain; display:block; margin:0 auto;" src="' + p.img + '" alt="' + tnAttr(p.name || "Proveedor") + '" />'
+		: '<div style="height:80px; display:flex; align-items:center; justify-content:center; color:' + theme.noteColor + '; font-weight:bold;">&nbsp;</div>';
 
-    var noteText = (p.note || "").trim();
-    var note =
-      '<p style="font-size:11px; color:' + theme.noteColor + '; margin:8px 0 12px 0; min-height:14px;">' +
-        (noteText ? noteText : "&nbsp;") +
-      "</p>";
+	  var noteText = (p.note || "").trim();
+	  var note =
+		'<p style="font-size:11px; color:' + theme.noteColor + '; margin:8px 0 12px 0; min-height:14px;">' +
+		  (noteText ? noteText : "&nbsp;") +
+		"</p>";
 
-    var href = buildProviderUrlFromName(p.name);
+	  // ✅ si hay link manual, úsalo. si no, default por nombre
+	  var manual = (p && p.link) ? String(p.link).trim() : "";
+	  var href = (manual && manual !== "#") ? manual : buildProviderUrlFromName(p && p.name ? p.name : "");
 
-    return (
-      '<div style="' +
-        "background:" + theme.cardBg + ";" +
-        "border:2px solid " + theme.cardBorder + ";" +
-        "padding:20px;" +
-        "text-align:center;" +
-        "height:240px;" +
-        "display:flex;" +
-        "flex-direction:column;" +
-        "justify-content:space-between;" +
-      '">' +
+	  return (
+		'<div style="' +
+		  "background:" + theme.cardBg + ";" +
+		  "border:2px solid " + theme.cardBorder + ";" +
+		  "padding:20px;" +
+		  "text-align:center;" +
+		  "height:240px;" +
+		  "display:flex;" +
+		  "flex-direction:column;" +
+		  "justify-content:space-between;" +
+		'">' +
 
-        "<div>" +
-          '<div style="height:80px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;">' +
-            img +
-          "</div>" +
+		  "<div>" +
+			'<div style="height:80px; display:flex; align-items:center; justify-content:center; margin-bottom:10px;">' +
+			  img +
+			"</div>" +
 
-          '<p style="' +
-            "font-size:16px;" +
-            "font-weight:bold;" +
-            "margin:0;" +
-            "color:" + theme.nameColor + ";" +
-            "overflow:hidden;" +
-            "text-overflow:ellipsis;" +
-            "white-space:nowrap;" +
-          '">' + (p.name || "&nbsp;") + "</p>" +
+			'<p style="' +
+			  "font-size:16px;" +
+			  "font-weight:bold;" +
+			  "margin:0;" +
+			  "color:" + theme.nameColor + ";" +
+			  "overflow:hidden;" +
+			  "text-overflow:ellipsis;" +
+			  "white-space:nowrap;" +
+			'">' + (p.name || "&nbsp;") + "</p>" +
 
-          note +
-        "</div>" +
+			note +
+		  "</div>" +
 
-        "<div>" +
-          '<a style="' +
-            "background:" + theme.btnBg + ";" +
-            "color:" + theme.btnText + ";" +
-            "text-decoration:none;" +
-            "font-size:13px;" +
-            "padding:10px 30px;" +
-            "font-weight:bold;" +
-            "display:inline-block;" +
-          '" href="' + href + '">VER</a>' +
-        "</div>" +
+		  "<div>" +
+			'<a style="' +
+			  "background:" + theme.btnBg + ";" +
+			  "color:" + theme.btnText + ";" +
+			  "text-decoration:none;" +
+			  "font-size:13px;" +
+			  "padding:10px 30px;" +
+			  "font-weight:bold;" +
+			  "display:inline-block;" +
+			'" href="' + (href || "#") + '">VER</a>' +
+		  "</div>" +
 
-      "</div>"
-    );
-  }
+		"</div>"
+	  );
+	}
+
+  function pickProviderHref(p){
+	  var manual = (p && p.link) ? String(p.link).trim() : "";
+	  if (manual && manual !== "#") return manual;
+	  return buildProviderUrlFromName(p && p.name ? p.name : "");
+	}
 
   function buildTable3Cols(cardsHtml){
     var rows = "";
